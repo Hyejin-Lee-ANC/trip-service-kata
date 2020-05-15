@@ -2,7 +2,6 @@ package org.craftedsw.tripservicekata.trip;
 
 import org.craftedsw.tripservicekata.exception.UserNotLoggedInException;
 import org.craftedsw.tripservicekata.user.User;
-import org.craftedsw.tripservicekata.user.UserSession;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,15 +10,27 @@ public class TripService {
 
     public static final ArrayList<Trip> NO_TRIPS = new ArrayList<>();
 
+    private final UserSessions userSessions;
+    private final TripsRepository tripsRepository;
+
+    public TripService() {
+        this(new UserSessions(), new TripsRepository());
+    }
+
+    public TripService(UserSessions userSessions, TripsRepository tripsRepository) {
+        this.userSessions = userSessions;
+        this.tripsRepository = tripsRepository;
+    }
+
     public List<Trip> getTripsByUser(User user) throws UserNotLoggedInException {
-        return getTripsByUser(user, getLoggedInUser());
+        return getTripsByUser(user, userSessions.getLoggedInUser());
     }
 
     protected List<Trip> getTripsByUser(User user, User loggedUser) {
         checkIfTheUserIsLoggedIn(loggedUser);
 
         if (user.friendsOf(loggedUser)) {
-            return tripsOf(user);
+            return tripsRepository.tripsOf(user);
         }
 
         return NO_TRIPS;
@@ -29,16 +40,6 @@ public class TripService {
         if (loggedUser == null) {
             throw new UserNotLoggedInException();
         }
-    }
-
-    // Seams
-
-    protected List<Trip> tripsOf(User user) {
-        return TripDAO.findTripsByUser(user);
-    }
-
-    protected User getLoggedInUser() {
-        return UserSession.getInstance().getLoggedUser();
     }
 
 }
